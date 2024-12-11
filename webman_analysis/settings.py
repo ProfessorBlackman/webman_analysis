@@ -6,6 +6,8 @@ from decouple import config
 
 from webman_analysis.custom_logging import DefaultJsonFormatter, DetailedJsonFormatter
 
+ROTATING_FILE_HANDLER = "logging.handlers.RotatingFileHandler"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -174,6 +176,7 @@ def create_path(file_name: str):
 log_files = {
     "wma_main": create_path("main.log"),
     "wma_auth": create_path("auth.log"),
+    "wma_redis": create_path("redis.log"),
 }
 
 LOGGING = {
@@ -204,7 +207,7 @@ LOGGING = {
         },
         "wma_main": {
             "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
+            "class": ROTATING_FILE_HANDLER,
             "filename": log_files["wma_main"],
             "formatter": "default_json",
             "maxBytes": 1024 * 1024 * 10,  # 10MB
@@ -212,8 +215,16 @@ LOGGING = {
         },
         "wma_auth": {
             "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
+            "class": ROTATING_FILE_HANDLER,
             "filename": log_files["wma_auth"],
+            "formatter": "default_json",
+            "maxBytes": 1024 * 1024 * 10,  # 10MB
+            "backupCount": 5,
+        },
+        "wma_redis": {
+            "level": "INFO",
+            "class": ROTATING_FILE_HANDLER,
+            "filename": log_files["wma_redis"],
             "formatter": "default_json",
             "maxBytes": 1024 * 1024 * 10,  # 10MB
             "backupCount": 5,
@@ -235,5 +246,31 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "redis": {
+            "handlers": ["console", "wma_redis"],
+            "level": "INFO",
+            "propagate": False,
+        },
     }
+}
+
+# application urls
+FRONTEND_DOMAIN = config("FRONTEND_DOMAIN")
+
+# drf_yasg configuration
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    },
+    'USE_SESSION_AUTH': False,
+    'JSON_EDITOR': True,
+    'SHOW_REQUEST_HEADERS': True,
+    'SHOW_EXTENSIONS': True,
+    'DOC_EXPANSION': 'list',
+    'VALIDATOR_URL': None,
+    'DEFAULT_MODEL_RENDERING': 'model',
 }
